@@ -1,0 +1,134 @@
+/* Modal background */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1500; 
+  }
+  
+  /* Modal content styling */
+  .modal-content {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    width: 400px; 
+    max-height: 80vh; 
+    /* overflow-y: auto;  */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); 
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* Modal header */
+  .modal-content h2 {
+    margin: 0 0 20px; 
+    font-size: 24px;
+    font-weight: bold;
+    color: #333; 
+  }
+  
+  /* Input field for group name */
+  .modal-content input[type="text"] {
+    width: 95%;
+    height: 10px;
+    padding: 10px;
+    margin-bottom: 20px; 
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+  }
+  
+  /* User list container */
+  .user-list {
+    max-height: 500px; 
+    overflow-y: auto; 
+    margin-bottom: 20px; 
+  }
+  
+  /* User list labels */
+  .user-list label {
+    display: flex;
+    align-items: center; 
+    margin-bottom: 10px; 
+    font-size: 16px;
+    color: #555;
+    cursor: pointer; 
+  }
+  
+  /* Style checkboxes */
+  .user-list input[type="checkbox"] {
+    margin-right: 10px; 
+  }
+  
+  /* Buttons styling */
+  .buttons{
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  button {
+    background-color: #007bff; 
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-right: 10px; 
+  }
+  #cancel{
+    background-color: red;
+  }
+  
+  button:hover {
+    background-color: #0056b3;
+  }
+  .user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 10px;
+    object-fit: cover; 
+  }
+  .user-avatar:hover{
+    cursor: pointer;
+  }
+
+ /* search user css */
+.search .search-image{
+  width: 15px;
+  height: 15px;
+}
+#search-bar{
+  display: flex;
+  border:1px solid #ddd;
+  align-items: center;
+  padding: 5px;
+  border-radius: 8px;
+}
+
+#search-bar:focus-within{
+  border-color: #007bff;
+}
+
+.search-user {
+  width: 100%;
+  border: none;
+  border-radius: 5px;
+  outline: none;
+  font-size: 1rem;
+  box-sizing: border-box; 
+}
+
+.search-user::placeholder {
+  color: #888; 
+}
+
+
+  

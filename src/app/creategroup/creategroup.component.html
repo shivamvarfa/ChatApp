@@ -1,0 +1,63 @@
+<div class="modal" *ngIf="!addMember && !bool">
+    <div class="modal-content">
+        <h2>Create Group</h2>
+        <input  type="text" placeholder="Enter Your Group Name"[(ngModel)]="groupName" required />
+        <div class="search">
+            <div id="search-bar">
+              <input [(ngModel)]="searchUserName" placeholder="Search user here..." class="search-user"
+                (ngModelChange)="onSearchChange()">
+              <img [src]="'search.jpeg'" class="search-image">
+            </div>
+          </div>
+          <div *ngIf="filteredUsers.length === 0 && searchUserName.trim() !== ''" class="no-users">
+            User not found
+          </div>
+        <div class="user-list">
+            <label *ngFor="let user of filteredUsers">
+              <input type="checkbox" [value]="user.id" (change)="onUserSelectionChange($event)" />
+                <img *ngIf="user.profileImage" [src]="'data:image/jpeg;base64,' + user.profileImage"
+                    alt="{{ user.username }}" class="user-avatar">
+                <img *ngIf="!user.profileImage" [src]="avatarUrl" alt="{{ user.username }}" class="user-avatar">
+                {{ user.username }}
+            </label>
+        </div>
+        <div class="buttons">
+            <button (click)="createGroup()">Create Group</button>
+            <button (click)="closeCreateGroupModal()" id="cancel">Cancel</button>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- code for add the group member inside the existing group -->
+<div class="modal" *ngIf="addMember">
+  <div class="modal-content">
+      <h2>Add Member</h2>
+      <label>Rename Group:</label>
+      <input  type="text" placeholder="Rename Group Name"[(ngModel)]="groupName" />
+      <div class="search">
+          <div id="search-bar">
+            <input [(ngModel)]="searchUserName" placeholder="Search user here..." class="search-user"
+              (ngModelChange)="onSearchChangeAddMember()">
+            <img [src]="'search.jpeg'" class="search-image">
+          </div>
+        </div>
+        <div *ngIf="addMemberUser.length === 0 && searchUserName.trim() !== ''" class="no-users">
+          User not found
+        </div>
+      <div class="user-list">
+          <label *ngFor="let user of addMemberUser">
+              <input type="checkbox" [value]="user.id" (change)="onUserSelectionChange($event)" />
+              <img *ngIf="user.profileImage" [src]="'data:image/jpeg;base64,' + user.profileImage"
+                  alt="{{ user.username }}" class="user-avatar">
+              <img *ngIf="!user.profileImage" [src]="avatarUrl" alt="{{ user.username }}" class="user-avatar">
+              {{ user.username }}
+          </label>
+      </div>
+      <div class="buttons">
+          <button (click)="updateGroupMember()">Add</button>
+          <button (click)="closeCreateGroupModal()" id="cancel">Cancel</button>
+      </div>
+  </div>
+</div>

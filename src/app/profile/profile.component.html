@@ -1,0 +1,84 @@
+<div class="profile-modal" *ngIf="isOpen">
+  <div class="modal-content">
+    <span class="close" (click)="closeModal()">&times;</span>
+    <div class="profile-image">
+      <img *ngIf="user.profileImage" [src]="'data:image/jpeg;base64,' + user.profileImage" alt="{{ user.username }}" (click)="openfullImage()">
+      <img *ngIf="!user.profileImage" [src]="'profile.png'" alt="{{ user.username }}">
+    </div>
+
+    <div class="profile-info">
+      <div *ngIf="imageName" class="image-name">{{ imageName }}</div>
+        <input type="file" id="image-upload" accept="image/*" (change)="onFileChange($event)" />
+      <label for="image-upload" class="upload-icon" *ngIf="!isEdit">Edit Photo</label>
+      <button (click)="submitForm()" *ngIf="!isEdit"  class="profile-edit-button">Remove Photo</button>
+      <button (click)="submitForm()" *ngIf="isEdit" class="profile-edit-button">Save</button>
+      <button (click)="cancelImage()" *ngIf="isEdit" class="profile-edit-button">Cancel</button>
+      <h2>{{ user.username }}</h2>
+      <p>{{ user.email }}</p>
+    </div>
+    <div class="profile-actions">
+      <button (click)="editProfile()">Edit Profile</button>
+      <button (click)="changePassword()">Change Password</button>
+    </div>
+
+
+    <!-- this is edit form  -->
+    <div class="edit-form" *ngIf="editMode">
+      <form [formGroup]="profileForm" (ngSubmit)="submitForm()">
+        <label for="username">Username:</label>
+        <input id="username" formControlName="username" placeholder="Enter username" />
+        <div *ngIf="profileForm.get('username')?.invalid && profileForm.get('username')?.touched">
+          <small *ngIf="profileForm.get('username')?.errors?.['required']">Username is required.</small>
+        </div>
+
+        <label for="email">Email:</label>
+        <input id="email" formControlName="email" type="email" placeholder="Enter email" />
+        <div *ngIf="profileForm.get('email')?.invalid && profileForm.get('email')?.touched">
+          <small *ngIf="profileForm.get('email')?.errors?.['required']">Email is required.</small>
+          <small *ngIf="profileForm.get('email')?.errors?.['email']">Enter a valid email address.</small>
+        </div>
+
+        <button type="submit" [disabled]="profileForm.invalid">Save Changes</button>
+        <button type="button" (click)="editMode = false">Cancel</button>
+      </form>
+    </div>
+
+    <!-- password change form -->
+    <div class="change-password-form" *ngIf="changePasswordMode && !editMode">
+      <form [formGroup]="changePasswordForm" (ngSubmit)="submitChangePasswordForm()">
+        <label for="currentPassword">Current Password:</label>
+        <input id="currentPassword" formControlName="currentPassword" type="password"
+          placeholder="Enter current password" />
+        <div
+          *ngIf="changePasswordForm.get('currentPassword')?.invalid && changePasswordForm.get('currentPassword')?.touched">
+          <small *ngIf="changePasswordForm.get('currentPassword')?.errors?.['required']">Current password is
+            required.</small>
+        </div>
+
+        <label for="newPassword">New Password:</label>
+        <input id="newPassword" formControlName="newPassword" type="password" placeholder="Enter new password" />
+        <div *ngIf="changePasswordForm.get('newPassword')?.invalid && changePasswordForm.get('newPassword')?.touched">
+          <small *ngIf="changePasswordForm.get('newPassword')?.errors?.['required']">New password is required.</small>
+          <small *ngIf="changePasswordForm.get('newPassword')?.errors?.['minlength']">Password must be at least 6
+            characters long.</small>
+        </div>
+
+        <label for="confirmPassword">Confirm Password:</label>
+        <input id="confirmPassword" formControlName="confirmPassword" type="password"
+          placeholder="Confirm new password" />
+        <div *ngIf="changePasswordForm.errors?.['mismatch']">
+          <small>Passwords do not match.</small>
+        </div>
+
+        <button type="submit" [disabled]="changePasswordForm.invalid">Change Password</button>
+        <button type="button" (click)="changePasswordMode = false">Cancel</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+
+<div class="full-image" *ngIf="fullImage" (click)="back()">
+  <img *ngIf="user.profileImage" [src]="'data:image/jpeg;base64,' + user.profileImage" alt="{{ user.username }}" class="full-image-img">
+</div>

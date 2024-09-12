@@ -1,0 +1,33 @@
+<div class="body">
+<div class="signup-container">
+    <form [formGroup]="signupForm" (ngSubmit)="onRegister()">
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input id="username" formControlName="username" type="text" class="form-control" placeholder="Enter username"/>
+        <div *ngIf="control['username'].invalid && (control['username'].dirty || control['username'].touched)" class="error-message">
+            <div *ngIf="control['username'].errors?.['required']">Username is required.</div>
+          </div>
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input id="password" formControlName="password" type="password" class="form-control" placeholder="password" />
+        <div *ngIf="control['password'].invalid && (control['password'].dirty || control['password'].touched)" class="error-message">
+            <div *ngIf="control['password'].errors?.['required']">Password is required.</div>
+            <div *ngIf="control['password'].errors?.['minlength']">Password must be at least 6 characters long.</div>
+          </div>
+      </div>
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input id="email" formControlName="email" type="email" class="form-control" placeholder="Enter email example@gmail.com"/>
+        <div *ngIf="control['email'].invalid && (control['email'].dirty || control['email'].touched)" class="error-message">
+            <div *ngIf="control['email'].errors?.['required']">Email is required.</div>
+            <div *ngIf="control['email'].errors?.['email']">Invalid email format.</div>
+          </div>
+      </div>
+      
+      <button type="submit" class="btn btn-primary">Register</button>
+      <button type="submit" class="btn back" (click)="onBack()">Back</button>
+    </form>
+  </div>
+</div>
+  

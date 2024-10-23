@@ -1,4 +1,7 @@
 <div class="body">
+  <div class="chatlogo-parent">
+    <img [src]="'chatlogo.png'" alt="chat image" class="chatlogo">
+  </div>
 <div class="login-container">
     <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
       <div class="form-group">
@@ -18,8 +21,10 @@
         </div>
       </div>
       <a  (click)="forgotpassword()" class="forgot-password-link">Forgot Password?</a>
+     <div class="buttons">
       <button type="submit" class="btn btn-primary">Login</button>
       <button (click)="onSignup()" class="btn btn-secondary">Signup</button>
+     </div>
      
     </form>
   </div>

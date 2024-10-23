@@ -9,13 +9,14 @@ export class SignupService {
   email:string='';
   constructor(private apollo: Apollo) { }
 
-  register(username: string, password: string, email: string): Observable<any> {
+  register(username: string, password: string, email: string,phoneNumber:string): Observable<any> {
     const CREATE_USER_MUTATION = gql`
       mutation CreateUser($createUserDto: CreateUserDto!) {
         createUser(createUserDto: $createUserDto) {
           id
           username
           email
+          phoneNumber
         }
       }
     `;
@@ -27,6 +28,7 @@ export class SignupService {
           username,
           password,
           email,
+          phoneNumber
         },
       },
     });

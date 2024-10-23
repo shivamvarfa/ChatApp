@@ -1,4 +1,7 @@
 <div class="body">
+  <div class="chatlogo-parent">
+    <img [src]="'chatlogo.png'" alt="chat image" class="chatlogo">
+  </div>
 <div class="signup-container">
     <form [formGroup]="signupForm" (ngSubmit)="onRegister()">
       <div class="form-group">
@@ -24,9 +27,20 @@
             <div *ngIf="control['email'].errors?.['email']">Invalid email format.</div>
           </div>
       </div>
+
+      <div class="form-group">
+        <label for="phone">Phone Number</label>
+        <input id="phone" formControlName="phoneNumber" type="tel" class="form-control" placeholder="Enter phone number"/>
+        <div *ngIf="control['phoneNumber'].invalid && (control['phoneNumber'].dirty || control['phoneNumber'].touched)" class="error-message">
+          <div *ngIf="control['phoneNumber'].errors?.['required']">Phone number is required.</div>
+          <div *ngIf="control['phoneNumber'].errors?.['pattern']">Invalid phone number format.</div>
+        </div>
+      </div>
       
-      <button type="submit" class="btn btn-primary">Register</button>
+      <div class="buttons">
+        <button type="submit" class="btn btn-primary">Register</button>
       <button type="submit" class="btn back" (click)="onBack()">Back</button>
+      </div>
     </form>
   </div>
 </div>

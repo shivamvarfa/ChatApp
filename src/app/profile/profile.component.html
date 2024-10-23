@@ -1,19 +1,21 @@
 <div class="profile-modal" *ngIf="isOpen">
   <div class="modal-content">
-    <span class="close" (click)="closeModal()">&times;</span>
+    <img [src]="'cancel.png'" alt="cancel image" class="close" (click)="closeModal()">
     <div class="profile-image">
-      <img *ngIf="user.profileImage" [src]="'data:image/jpeg;base64,' + user.profileImage" alt="{{ user.username }}" (click)="openfullImage()">
+      <img *ngIf="user.profileImage" [src]="'data:image/jpeg;base64,' + user.profileImage" alt="{{ user.username }}"
+        (click)="openfullImage()">
       <img *ngIf="!user.profileImage" [src]="'profile.png'" alt="{{ user.username }}">
     </div>
 
     <div class="profile-info">
       <div *ngIf="imageName" class="image-name">{{ imageName }}</div>
-        <input type="file" id="image-upload" accept="image/*" (change)="onFileChange($event)" />
+      <input type="file" id="image-upload" accept="image/*" (change)="onFileChange($event)" />
       <label for="image-upload" class="upload-icon" *ngIf="!isEdit">Edit Photo</label>
-      <button (click)="submitForm()" *ngIf="!isEdit"  class="profile-edit-button">Remove Photo</button>
+      <button (click)="submitForm()" *ngIf="!isEdit" class="profile-edit-button">Remove Photo</button>
       <button (click)="submitForm()" *ngIf="isEdit" class="profile-edit-button">Save</button>
       <button (click)="cancelImage()" *ngIf="isEdit" class="profile-edit-button">Cancel</button>
-      <h2>{{ user.username }}</h2>
+      <h5>{{ user.username }}</h5>
+      <p>+91 {{user.phoneNumber}}</p>
       <p>{{ user.email }}</p>
     </div>
     <div class="profile-actions">
@@ -38,6 +40,12 @@
           <small *ngIf="profileForm.get('email')?.errors?.['email']">Enter a valid email address.</small>
         </div>
 
+        <label for="phone">Phone Number:</label>
+        <input id="phone" formControlName="phoneNumber" type="tel" placeholder="Enter phone number" />
+        <div *ngIf="profileForm.get('phoneNumber')?.invalid && profileForm.get('phoneNumber')?.touched">
+          <small *ngIf="profileForm.get('phoneNumber')?.errors?.['required']">Phone number is required.</small>
+          <small *ngIf="profileForm.get('phoneNumber')?.errors?.['pattern']">Enter a valid phone number.</small>
+        </div>
         <button type="submit" [disabled]="profileForm.invalid">Save Changes</button>
         <button type="button" (click)="editMode = false">Cancel</button>
       </form>
@@ -80,5 +88,6 @@
 
 
 <div class="full-image" *ngIf="fullImage" (click)="back()">
-  <img *ngIf="user.profileImage" [src]="'data:image/jpeg;base64,' + user.profileImage" alt="{{ user.username }}" class="full-image-img">
+  <img *ngIf="user.profileImage" [src]="'data:image/jpeg;base64,' + user.profileImage" alt="{{ user.username }}"
+    class="full-image-img">
 </div>

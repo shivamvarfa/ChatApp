@@ -1,9 +1,11 @@
 .body{
   overflow: hidden;
+  height: 100vh;
+  display: flex;
+  align-items: center;
 }
 .signup-container {
-    max-width: 400px;
-    margin: 150px auto 0 auto;
+    max-width: 500px;
     padding: 20px;
     border: 1px solid #ccc;
     border-radius: 5px;
@@ -11,7 +13,8 @@
   }
   
   .form-group {
-    margin-bottom: 15px;
+    width: 500px;
+    margin-bottom: 20px;
   }
   
   .form-group label {
@@ -35,7 +38,11 @@
     color: #fff;
     cursor: pointer;
   }
-  
+  .buttons{
+    display: flex;
+    justify-content: center;
+    gap:10px;
+  }
   .btn-primary {
     background-color: #007bff;
   }
@@ -44,7 +51,65 @@
     font-size: 0.875em;
   }
   .back{
-    margin: 10px;
     background-color: #007bff;
   }
-  
+  .chatlogo-parent{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 0px;
+    margin-bottom: 0px;
+  }
+  .chatlogo{
+     width: 500px;
+     height: 400px;
+  }
+   /* Responsive Styles */
+@media (max-width: 1000px) {
+  .body{
+    display: block;
+    overflow: scroll;
+  }
+  .signup-container {
+    width: 80%;
+    height: auto;
+    padding: 15px;
+    margin: 10px;
+  }
+
+  .form-group {
+    margin-bottom: 12px;
+  }
+
+  .buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .btn {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  .btn-secondary {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .chatlogo {
+    max-width: 300px;
+  }
+
+  .login-container {
+    height: auto;
+  }
+
+  .form-group input {
+    font-size: 0.875em;
+  }
+
+  .btn {
+    padding: 8px 12px;
+  }
+}

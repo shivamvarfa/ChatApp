@@ -28,7 +28,11 @@ export class ProfileComponent implements OnInit {
 constructor(private messageService:MessageService,private router:Router,private fb: FormBuilder,private profileService:ProfileService,private snackBar: MatSnackBar){
   this.profileForm = this.fb.group({
     username: ['', Validators.required],
-    email: [ '', [Validators.required, Validators.email]]
+    email: [ '', [Validators.required, Validators.email]],
+    phoneNumber: ['', [
+      Validators.required, // Phone number is required
+      Validators.pattern(/^\+?[0-9]{1,15}$/) // Pattern for valid phone numbers
+    ]]
   });
 
   this.changePasswordForm = this.fb.group({
@@ -40,7 +44,8 @@ constructor(private messageService:MessageService,private router:Router,private 
   setTimeout(()=>{
     this.profileForm = this.fb.group({
       username: [this.user.username || '', Validators.required],
-      email: [ this.user.email||'', [Validators.required, Validators.email]]
+      email: [ this.user.email||'', [Validators.required, Validators.email]],
+      phoneNumber:[this.user.phoneNumber ||'',Validators.required]
     });
   },1000)
 }
@@ -104,6 +109,7 @@ constructor(private messageService:MessageService,private router:Router,private 
     email:'',
     oldPassword:'',
     password:'',
+    phoneNumber:''
   };
  
   submitForm() {
@@ -112,6 +118,7 @@ constructor(private messageService:MessageService,private router:Router,private 
         username:formData.username,
         email:formData.email,
         profileImage: this.imageData ? (this.imageData as string).split(',')[1] : null,
+        phoneNumber:formData.phoneNumber
       }
        this.profileService.updateUser(this.user.id,updateUserDto).subscribe({
         next: (response) => {

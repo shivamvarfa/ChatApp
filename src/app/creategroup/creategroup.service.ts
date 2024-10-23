@@ -6,9 +6,9 @@ import { Observable, catchError, throwError } from 'rxjs';
   providedIn: 'root'
 })
 export class CreategroupService {
- addMemberShow:boolean=false;
- addMemberUser:any[]=[];
- groupId:string='';
+  addMemberShow: boolean = false;
+  addMemberUser: any[] = [];
+  groupId: string = '';
   private CREATE_GROUP_MUTATION = gql`
   mutation CreateGroup($createGroupDto: CreateGroupDto!) {
     createGroup(createGroupDto: $createGroupDto) {
@@ -63,6 +63,7 @@ export class CreategroupService {
         }
       }
       createdAt
+      imageData
     }
   }
 `;
@@ -80,6 +81,9 @@ export class CreategroupService {
         name
       }
       createdAt
+      imageData
+      deletedUser
+      deleteUserForEveryone
     }
   }
 `;
@@ -91,6 +95,7 @@ export class CreategroupService {
         id
         content
         createdAt
+        imageData
         sender {
           id
           username
@@ -116,7 +121,7 @@ export class CreategroupService {
   }
 `;
 
-private editGroupMessageMutation = gql`
+  private editGroupMessageMutation = gql`
 mutation EditGroupMessage($id: String!, $updateGroupMessageDto: UpdateGroupMessageDto!) {
   editGroupMessage(id: $id, updateGroupMessageDto: $updateGroupMessageDto) {
     id
@@ -125,13 +130,24 @@ mutation EditGroupMessage($id: String!, $updateGroupMessageDto: UpdateGroupMessa
 }
 `;
 
-private deleteGroupMessageMutation = gql`
-mutation DeleteGroupMessage($id: String!) {
-  deleteGroupMessage(id: $id)
+  private DELETE_GROUP_MESSAGE_MUTATION = gql`
+  mutation DeleteGroupMessage($id: String!, $userId: String!) {
+    deleteGroupMessage(id: $id, userId: $userId) {
+      id
+      content
+      createdAt
+    }
+  }
+`;
+
+private deleteGroupMessageMe = gql`
+mutation DeleteGroupMessageForMe($id: String!, $userId: String!) {
+  deleteGroupMessageForMe(id: $id, userId: $userId)
 }
 `;
 
-private UPDATE_GROUP = gql`
+
+  private UPDATE_GROUP = gql`
   mutation UpdateGroup($id: String!, $updateGroupDto: UpdateGroupDto!) {
     updateGroup(id: $id, updateGroupDto: $updateGroupDto) {
       id
@@ -198,7 +214,8 @@ private UPDATE_GROUP = gql`
       query: this.GET_MEMBERS_BY_GROUP_ID,
       variables: {
         groupId
-      }
+      },
+      fetchPolicy: 'network-only'  // Ensure data is always fetched from the network
     });
   }
 
@@ -212,28 +229,29 @@ private UPDATE_GROUP = gql`
     });
   }
 
-  deleteGroupMessage(id: string): Observable<any> {
+  deleteGroupMessage(id: string,userId:string): Observable<any> {
     return this.apollo.mutate({
-      mutation: this.deleteGroupMessageMutation,
+      mutation: this.DELETE_GROUP_MESSAGE_MUTATION,
       variables: {
         id,
+        userId
       },
     });
   }
 
 
-  addMember(addMemberShow:boolean,addMember:any[],groupId:string){
-    this.addMemberShow=addMemberShow;
-    this.addMemberUser=addMember;
-    this.groupId=groupId;
+  addMember(addMemberShow: boolean, addMember: any[], groupId: string) {
+    this.addMemberShow = addMemberShow;
+    this.addMemberUser = addMember;
+    this.groupId = groupId;
   }
-  getAddMember(){
+  getAddMember() {
     return this.addMemberShow;
   }
-  getaddMemberUser(){
+  getaddMemberUser() {
     return this.addMemberUser;
   }
-  getGroupId(){
+  getGroupId() {
     return this.groupId;
   }
 
@@ -243,7 +261,17 @@ private UPDATE_GROUP = gql`
       variables: {
         id,
         updateGroupDto,
+      }, fetchPolicy: 'network-only' // Ensure fresh data is fetched from the server
+    });
+  }
+
+  deleteGroupMessageForMe(id: string,userId:string): Observable<any> {
+    return this.apollo.mutate({
+      mutation: this.deleteGroupMessageMe,
+      variables: {
+        id,
+        userId
       },
-    })
+    });
   }
 }

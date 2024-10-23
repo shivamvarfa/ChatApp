@@ -19,13 +19,17 @@ export class SignupComponent {
      username: ['', Validators.required],
      password: ['', [Validators.required, Validators.minLength(6)]],
      email: ['', [Validators.required, Validators.email]],
+     phoneNumber: ['', [
+      Validators.required,
+      Validators.pattern(/^\+?[0-9]{1,15}$/) // Example pattern for phone numbers
+    ]]
    });
  }
 
  onRegister(): void {
    if (this.signupForm.valid) {
      const formData = this.signupForm.value;
-     this.signup.register(formData.username,formData.password,formData.email).subscribe({
+     this.signup.register(formData.username,formData.password,formData.email,formData.phoneNumber).subscribe({
        next: (response) => {
          console.log('Registration successful', response);
          this.snackBar.open('Registration successful!', 'OK', {

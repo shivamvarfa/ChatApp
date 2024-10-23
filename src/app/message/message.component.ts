@@ -8,6 +8,8 @@ import { CustomDatePipe } from '../custom-date.pipe';
 import { Router, RouterOutlet } from '@angular/router';
 import { CreategroupService } from '../creategroup/creategroup.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { ProfileService } from '../profile/profile.service';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
   selector: 'app-message',
@@ -36,7 +38,6 @@ export class MessageComponent implements OnInit, OnDestroy, AfterViewInit {
   selectedMessage: any = null;
   isEdit: boolean = false;
   editedId: string = '';
-  // currentUserMessages$: BehaviorSubject<any[]> = new BehaviorSubject<any[]>([]);
   private subscription: Subscription = new Subscription();
   dropdownVisible: boolean = false;
   groupedMessages: { [date: string]: any[] } = {};
@@ -46,13 +47,22 @@ export class MessageComponent implements OnInit, OnDestroy, AfterViewInit {
   dropdownVisibleGroup: boolean = false;
   showGroupHeader: boolean = false;
   showUserHeader: boolean = false;
+  chatdropdown: boolean = false;
+  userTyping: any = [];
+  profilePopup:boolean=false;
+  isBlocked:boolean=false;
+  showSendMessagePop:boolean=false;
   @ViewChild('messagesContainer') private messagesContainer!: ElementRef;
+  errorMessage: string='';
 
-  constructor(private authService: AuthService, private messageService: MessageService, private router: Router, private createGroupService: CreategroupService, private cdr: ChangeDetectorRef, private snackBar: MatSnackBar) { }
+  constructor(private authService: AuthService, private messageService: MessageService, private router: Router, private createGroupService: CreategroupService, private cdr: ChangeDetectorRef, private snackBar: MatSnackBar, private profileService: ProfileService) { }
   ngOnInit() {
     console.log("inside the ngOnInit");
     this.userId = localStorage.getItem('id') || '';
     this.loadUser(this.userId);
+    // setInterval(()=>{
+    //   this.loadUser(this.userId)
+    // },4000)
     setTimeout(() => {
       this.getUnreadCount(this.userId, this.receiverIds);
       this.onstartSubscritpion();
@@ -70,12 +80,12 @@ export class MessageComponent implements OnInit, OnDestroy, AfterViewInit {
           const newMessage = result.data.messageCreated;
           const newGroupedMessages = this.messageService.groupMessagesByDate([newMessage]);
           this.scrollToBottom();
-          // || this.userId===newMessage.sender.id
-          if (this.receiverId === newMessage.receiver.id || this.receiverId === newMessage.sender.id) {
+          // || this.receiverId === newMessage.sender.id  
+          if ((this.receiverId === newMessage.receiver.id && this.userId === newMessage.sender.id) || this.receiverId === newMessage.sender.id) {
             // these is call markAsRead API when other user already open chat
             this.messageService.markAsRead(this.userId, this.receiverId).subscribe({
               next: (updatedMessages) => {
-                // this.currentUserMessages$.next(updatedMessages.data.markAsRead)
+  
               },
               error: (error) => {
                 console.error('Error marking messages as read:', error);
@@ -91,8 +101,7 @@ export class MessageComponent implements OnInit, OnDestroy, AfterViewInit {
               }
             }
           }
-          this.convertTimestampsToDates();
-          this.sortUsersByLastMessage();
+          this.loadUser(this.userId);
         },
         error: (error) => console.error('Subscription error', error),
       })
@@ -111,18 +120,19 @@ export class MessageComponent implements OnInit, OnDestroy, AfterViewInit {
       })
     )
 
-    // subscription for deleted message
-    this.subscription.add(
-      this.messageService.onMessageDeleted().subscribe({
-        next: (response) => {
-          const deletedMessageId = response.data.messageDeleted.id;
-          this.handleMessageDeletion(deletedMessageId);
-        },
-        error: (error) => {
-          console.log('subscription error while deleted message', error);
-        }
-      })
-    )
+
+    // subscription for send the start typing message to anopther user
+    this.messageService.getUserUpdated(this.userId).subscribe({
+      next: (response) => {
+        // this.user =response.data;
+        this.loadUser(this.userId);
+        console.log('User updated:', this.user);
+      },
+      error: (error) => {
+        console.error('Subscription error:', error);
+      }
+    });
+
 
     // load the group in which the user is involved
     if (this.userId) {
@@ -160,6 +170,36 @@ export class MessageComponent implements OnInit, OnDestroy, AfterViewInit {
       })
     );
 
+  }
+
+
+  // code for send the any user is typing....
+  onInputFocus() {
+    const updateUserDto = {
+      isTyping: true,
+    };
+    this.profileService.updateUser(this.user.id, updateUserDto).subscribe({
+      next: (response) => {
+        this.userTyping = response.data.updateUser;
+      },
+      error: (error) => {
+        console.error('Error updating user:', error);
+      },
+    });
+  }
+
+  onInputBlur() {
+    const updateUserDto = {
+      isTyping: false,
+    }
+    this.profileService.updateUser(this.user.id, updateUserDto).subscribe({
+      next: (response) => {
+        // console.log('User updated successfully:', response);
+      },
+      error: (error) => {
+        console.error('Error updating user:', error);
+      },
+    });
   }
 
 
@@ -254,10 +294,10 @@ export class MessageComponent implements OnInit, OnDestroy, AfterViewInit {
           if (response) {
             this.unReadCount = response.data.unreadCounts;
             this.filteredUsers = this.filteredUsers.map(user => {
-              const unread = this.unReadCount.find(count => count.receiverId === user.id);
+              const unread = this.unReadCount.find(count => count.receiverId === user.id && user.id != this.receiverId);
               return {
                 ...user,
-                unreadCount: unread ? unread.unreadCount : 0 // Add unread count to user object
+                unreadCount: unread ? unread.unreadCount : 0,// Add unread count to user objec
               };
             });
           } else {
@@ -314,6 +354,18 @@ export class MessageComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
 
+
+  checkIfBlocked() {
+    this.messageService.checkBlockUser(this.userId, this.receiverId).subscribe({
+      next: (result) => {
+        this.isBlocked = result.data.checkBlockUser;
+      },
+      error: (error) => {
+        console.error('Error checking block status:', error);
+      },
+    });
+  }
+
   getDates(): string[] {
     return Object.keys(this.groupedMessages).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
   }
@@ -338,25 +390,13 @@ export class MessageComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   onKeyDown(event: KeyboardEvent): void {
-    const textarea = event.target as HTMLTextAreaElement;
     if (event.key === 'Enter') {
-      if (event.shiftKey) {
-
-        event.preventDefault();
-        const cursorPos = textarea.selectionStart || 0;
-        this.messageContent =
-          this.messageContent.slice(0, cursorPos) + '\n' +
-          this.messageContent.slice(cursorPos);
-
-        // Move cursor to the position after the newline
-        setTimeout(() => {
-          textarea.selectionStart = cursorPos + 1;
-          textarea.selectionEnd = cursorPos + 1;
-        }, 0);
-      } else {
-        event.preventDefault();
+      if (!this.isEdit) {
         this.sendMessage();
+      } else {
+        this.messageEdited();
       }
+      event.preventDefault();
     }
   }
 
@@ -417,7 +457,15 @@ export class MessageComponent implements OnInit, OnDestroy, AfterViewInit {
         this.imageName = null; // Clear image name
       },
       error: (error) => {
-        console.error('Error sending message:', error);
+        console.log("error while sending the message",error.message);
+        if(error.message==300){
+          console.log("inside id")
+            this.showSendMessagePop=true;
+        }else{
+          this.snackBar.open("You are Blocked can't send message", 'OK', {
+            duration: 500,
+          })
+        }
       }
     });
   }
@@ -481,9 +529,47 @@ export class MessageComponent implements OnInit, OnDestroy, AfterViewInit {
 
   deleteMessage(): void {
     if (this.editedId) {
-      this.messageService.deleteMessage(this.editedId).subscribe({
+      this.messageService.deleteMessage(this.editedId, this.userId).subscribe({
+        next: (response) => {
+          console.log("deleted message successfully", response);
+          const content = response.data.deleteMessage.content;
+          console.log(content)
+          this.snackBar.open('Message Deleted Successfully', 'OK', {
+            duration: 500,
+          })
+          this.groupedMessages = Object.keys(this.groupedMessages).reduce((acc, date) => {
+            acc[date] = this.groupedMessages[date].map(message => {
+              if (message.id === response.data.deleteMessage.id) {
+                return {
+                  ...message,
+                  content: content // Update the content
+                };
+              }
+              return message;
+            });
+            return acc;
+          }, {} as { [date: string]: any[] });
+          this.messageService.getMessagesBetween(this.userId, this.receiverId).pipe(
+            map(response => response.data.getMessagesBetween)
+          ).subscribe(messages => {
+            this.groupedMessages = this.messageService.groupMessagesByDate(messages);
+          });
+          this.removeDropDown();
+        },
+        error: (error) => {
+          console.log("error while deleting message", error);
+        }
+      });
+    } else {
+      console.warn("selected the deleted id");
+    }
+  }
+  deleteForMe(): void {
+    if (this.editedId) {
+      this.messageService.deleteForMe(this.editedId, this.userId).subscribe({
         next: (response) => {
           console.log("deleted message successfully");
+          this.handleMessageDeletion(this.editedId);
           this.snackBar.open('Message Deleted Successfully', 'OK', {
             duration: 500,
           })
@@ -497,7 +583,13 @@ export class MessageComponent implements OnInit, OnDestroy, AfterViewInit {
       console.warn("selected the deleted id");
     }
   }
-
+  // code for open the chat drop down
+  openChatDropdown() {
+    this.chatdropdown = true;
+  }
+  closeChatDropdown() {
+    this.chatdropdown = false;
+  }
 
   logout() {
     this.authService.logout();
@@ -505,6 +597,56 @@ export class MessageComponent implements OnInit, OnDestroy, AfterViewInit {
   openProfile() {
     this.router.navigate(['chat-dashboard/user-profile']);
   }
+
+//  code for when user click on the user name at that time show the user profile
+openProfilePopup(){
+  this. checkIfBlocked();
+  this.profilePopup=true;
+}
+closeProfilePopup(){
+  this.profilePopup=false;
+}
+blockUser() {
+  this.messageService.blockUser(this.userId, this.receiverId).subscribe({
+    next: (response) => {
+      console.log('User blocked:', response.data.blockUser);
+      this.isBlocked=true;
+    },
+    error: (error) => {
+      console.error('Error blocking user:', error);
+    },
+  });
+}
+cancelMessagepop(){
+  this.showSendMessagePop=false;
+}
+unBlockUser() {
+  this.messageService.unblockUser(this.userId, this.receiverId).subscribe({
+    next: (response) => {
+      console.log('User unblocked:', response.data.unBlockUser);
+      this.showSendMessagePop=false;
+      this.isBlocked=false;
+    },
+    error: (error) => {
+      console.error('Error blocking user:', error);
+    },
+  });
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
   // code for create Group
@@ -526,7 +668,7 @@ export class MessageComponent implements OnInit, OnDestroy, AfterViewInit {
     this.dropdownVisibleGroup = false;
   }
   createGroup() {
-    this.createGroupService.addMember(false, [],'');
+    this.createGroupService.addMember(false, [], '');
     this.router.navigate(['chat-dashboard/create-group']);
     this.dropdownVisibleGroup = false;
   }
@@ -542,27 +684,30 @@ export class MessageComponent implements OnInit, OnDestroy, AfterViewInit {
       map(response => response.data.getGroupMessages)
     ).subscribe(messages => {
       this.groupedMessages = this.messageService.groupMessagesByDate(messages);
-
-      // this.currentUserMessages$.next(messages); // Update the BehaviorSubject
+      console.log(this.groupedMessages)
     });
   }
 
   sendGroupMessage() {
-    if (this.messageContent.trim() === '' || !this.groupId) {
+    if (this.messageContent.trim() === '' && !this.imageData ) {
       console.log('Message content or group ID is missing.');
       return;
     }
-
+    this.imageSrc = null;
+    this.fileSelected = false;
     const createGroupMessageDto = {
       content: this.messageContent,
       senderId: this.userId,
-      groupId: this.groupId
+      groupId: this.groupId,
+      imageData: this.imageData ? (this.imageData as string).split(',')[1] : null
     };
-
+    console.log("insid etghe image send methoid ")
     this.createGroupService.createGroupMessage(createGroupMessageDto).subscribe({
       next: (response) => {
         console.log('Message created:', response.data.createGroupMessage);
         this.messageContent = ''; // Clear the input field
+        this.imageData = null; // Clear selected image
+        this.imageName = null; // Clear image name
       },
       error: (error) => {
         console.error('Error creating message:', error);
@@ -624,15 +769,36 @@ export class MessageComponent implements OnInit, OnDestroy, AfterViewInit {
       console.log("enter message and correct id")
     }
   }
-
+// delete group message everyone....
   deleteGroupMessage(): void {
     if (this.editedId) {
-      this.createGroupService.deleteGroupMessage(this.editedId).subscribe({
+      this.createGroupService.deleteGroupMessage(this.editedId, this.userId).subscribe({
         next: (response) => {
+
+          console.log("deleted message successfully", response);
+          const deletedMessage = response.data.deleteGroupMessage;
+          console.log("content of message",deletedMessage)
           this.snackBar.open('Message Deleted Successfully', 'OK', {
             duration: 500,
           })
-          this.handleMessageDeletion(this.editedId);
+          this.groupedMessages = Object.keys(this.groupedMessages).reduce((acc, date) => {
+            acc[date] = this.groupedMessages[date].map(message => {
+              if (message.id === deletedMessage.id) {
+                return {
+                  ...message,
+                  content: deletedMessage.content // Update the content
+                };
+              }
+              return message;
+            });
+            return acc;
+          }, {} as { [date: string]: any[] });
+          this.createGroupService.getGroupMessages(this.groupId).pipe(
+            map(response => response.data.getGroupMessages)
+          ).subscribe(messages => {
+            this.groupedMessages = this.messageService.groupMessagesByDate(messages);
+            console.log(this.groupedMessages)
+          });
           this.removeDropDown();
         },
         error: (error) => {
@@ -655,7 +821,8 @@ export class MessageComponent implements OnInit, OnDestroy, AfterViewInit {
 
   addMember() {
     this.addUsers = this.filterOutExistingMembers(this.filteredUsers, this.members)
-    this.createGroupService.addMember(this.showAddMember, this.addUsers,this.groupId);
+    this.createGroupService.addMember(this.showAddMember, this.addUsers, this.groupId);
+    this.showGroupUser = false;
     this.router.navigate(['/chat-dashboard/create-group']);
   }
 
@@ -671,28 +838,63 @@ export class MessageComponent implements OnInit, OnDestroy, AfterViewInit {
     console.log(this.selectedUsers)
   }
 
-  removeMember(){
-    if(this.groupId){
-      const updateGroupDto={
-        removeMembers:this.selectedUsers,
-        adminId:''
+  removeMember() {
+    if (this.groupId && this.selectedUsers.length > 0) {
+      const updateGroupDto = {
+        removeMembers: this.selectedUsers,
+        adminId: ''
       }
-      this.createGroupService.updateGroup(this.groupId,updateGroupDto).subscribe({
-        next:(response)=>{
+      this.createGroupService.updateGroup(this.groupId, updateGroupDto).subscribe({
+        next: (response) => {
           console.log(response.data.updateGroup)
           this.snackBar.open('Member Removed successfully!', 'OK', {
             duration: 500,
           })
-          this.showGroupUser=false;
+
+          this.showGroupUser = false;
         },
-        error:(error)=>{
-          console.log("error while updating the group",error);
+        error: (error) => {
+          console.log("error while updating the group", error);
         }
       })
-    }else{
-       console.log("group id not found");
+    } else {
+      this.snackBar.open('Please Select Member', 'OK', {
+        duration: 500,
+      })
     }
   }
-  
+
+  onKeydownGroup(event: KeyboardEvent) {
+    if (event.key === 'Enter') {
+      if (!this.isEdit) {
+        this.sendGroupMessage();
+      } else {
+        this.messageGroupEdited();
+      }
+      event.preventDefault();
+    }
+  }
+ 
+  // delete group message for me.....
+  deleteGroupMessageForMe(): void {
+    if (this.editedId) {
+      this.createGroupService.deleteGroupMessageForMe(this.editedId, this.userId).subscribe({
+        next: (response) => {
+          console.log("deleted message successfully");
+          this.handleMessageDeletion(this.editedId);
+          this.snackBar.open('Message Deleted Successfully', 'OK', {
+            duration: 500,
+          })
+          this.removeDropDown();
+        },
+        error: (error) => {
+          console.log("error while deleting message", error);
+        }
+      });
+    } else {
+      console.warn("selected the deleted id");
+    }
+  }
+
 }
 

@@ -13,6 +13,7 @@ export class ProfileService {
       username
       email
       profileImage
+      isTyping
     }
   }
 `;
@@ -26,8 +27,9 @@ constructor(private apollo: Apollo) {}
       variables: {
         id,
         updateUserDto
-      }
-    })
+      },
+      fetchPolicy: 'network-only'
+    });
   }
   getUser(id: string): Observable<any> {
     return this.apollo.query({

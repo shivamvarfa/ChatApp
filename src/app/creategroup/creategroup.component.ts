@@ -126,6 +126,8 @@ export class CreategroupComponent implements OnInit {
         this.createGroupService.updateGroup(this.groupId,updateGroupDto).subscribe({
           next:(response)=>{
             console.log(response)
+            this.createGroupService.getMembersByGroupId(this.groupId);
+            this.router.navigate(['chat-dashboard'])
             this.snackBar.open('Member added successfully!', 'OK', {
               duration: 500,
             })

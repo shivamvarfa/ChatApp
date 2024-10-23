@@ -3,46 +3,53 @@
     <img *ngIf="user.profileImage" [src]="'data:image/jpeg;base64,' + user.profileImage" alt="{{ user.username }}"
       class="user-avatar" (click)="openProfile()">
     <img *ngIf="!user.profileImage" [src]="avatarUrl" alt="{{ user.username }}" (click)="openProfile()">
-    <h1 style="h1:hover{cursor: pointer;}" (click)="openProfile()">{{capitalizeFirstLetter(user.username)}}</h1>
+    <h1 style="h1:hover{cursor: pointer;}font-family: Georgia, 'Times New Roman', Times, serif;"
+      (click)="openProfile()">{{capitalizeFirstLetter(user.username)}}</h1>
   </div>
   <button id="btn" (click)="logout()">Logout</button>
 </header>
 
 <div class="chat-app">
   <aside class="user-list">
-    <div class="group-parent">
-      <span id="chat-app">ChatApp</span>
-      <div class="icons">
-        <img [src]="'scan.png'" alt="can't laod image" class="create-group">
-        <img [src]="'camera.png'" alt="can't laod image" class="create-group">
-        <img [src]="'dots.png'" alt="can't laod image" class="create-group" (click)="opengroup()">
-        <div *ngIf="dropdownVisibleGroup" class="dropdown-group">
-          <button (click)="createGroup()">New Group</button>
-          <button (click)="removeDropDownGroup()">Cancel</button>
+    <div style="position: sticky; top:0rem;background-color:#f4f4f4;z-index: 4;;">
+      <div class="group-parent">
+        <span id="chat-app">ChatApp</span>
+        <div class="icons">
+          <img [src]="'scan.png'" alt="can't laod image" class="create-group">
+          <img [src]="'camera.png'" alt="can't laod image" class="create-group">
+          <img [src]="'dots.png'" alt="can't laod image" class="create-group" (click)="opengroup()">
+          <div *ngIf="dropdownVisibleGroup" class="dropdown-group">
+            <button (click)="createGroup()">New Group</button>
+            <button (click)="removeDropDownGroup()">Cancel</button>
+          </div>
+        </div>
+      </div>
+      <div class="search">
+        <div id="search-bar">
+          <input [(ngModel)]="searchUserName" placeholder="Search user here..." class="search-user"
+            (ngModelChange)="onSearchChange()">
+          <img [src]="'search.jpeg'" class="search-image">
         </div>
       </div>
     </div>
-    <div class="search">
-      <div id="search-bar">
-        <input [(ngModel)]="searchUserName" placeholder="Search user here..." class="search-user"
-          (ngModelChange)="onSearchChange()">
-        <img [src]="'search.jpeg'" class="search-image">
-      </div>
-    </div>  
     <div *ngIf="filteredUsers.length === 0 && searchUserName.trim() !== ''" class="no-users">
       User not found
     </div>
     <div *ngFor="let user of filteredUsers" class="user-item" (click)="selectUser(user)">
-      <img *ngIf="user.profileImage" [src]="'data:image/jpeg;base64,' + user.profileImage" alt="{{ user.username }}"
-        class="user-avatar" (click)="openFullScreenImage('data:image/jpeg;base64,' + user.profileImage, $event)">
-      <img *ngIf="!user.profileImage" [src]="avatarUrl" alt="{{ user.username }}" class="user-avatar"
-        (click)="openFullScreenImage(avatarUrl, $event)">
+      <div class="user-avatar-container">
+        <img *ngIf="user.profileImage" [src]="'data:image/jpeg;base64,' + user.profileImage" alt="{{ user.username }}"
+          class="user-avatar" (click)="openFullScreenImage('data:image/jpeg;base64,' + user.profileImage, $event)">
+        <img *ngIf="!user.profileImage" [src]="avatarUrl" alt="{{ user.username }}" class="user-avatar"
+          (click)="openFullScreenImage(avatarUrl, $event)">
+        <img *ngIf="user.isLogin" [src]="'online1.png'" class="online" alt="online image">
+      </div>
       <div class="user-status1">
         <span class="user-name">{{ user.username }}</span>
         <small *ngIf="!user.isLogin">
           {{ user.logOutTimer | customDate }}
         </small>
-        <small *ngIf="user.isLogin">online</small>
+        <small *ngIf="user.isLogin ">online</small>
+        <small *ngIf="user.isTyping">typing....</small>
       </div>
       <!-- Display unread count if available -->
       <span *ngIf="user.unreadCount > 0" class="unread-count">
@@ -78,15 +85,25 @@
         <img *ngIf="!selectedUser.profileImage" [src]="avatarUrl" alt="{{ selectedUser.username }}" class="user-avatar"
           (click)="openFullScreenImage(avatarUrl, $event)">
         <div class="status-info">
-          <span class="user-name">{{ capitalizeFirstLetter(selectedUser.username) }}</span>
+          <span class="user-name" (click)="openProfilePopup()">{{ capitalizeFirstLetter(selectedUser.username) }}</span>
           <small *ngIf="!isLogin">
             {{ selectedUser.logOutTimer | customDate }}
           </small>
           <small *ngIf="isLogin">online</small>
         </div>
       </div>
+      <div class="call">
+        <img [src]="'video-chat-line.png'" alt="video call" style="height: 20px;width: 20px;">
+        <img [src]="'phone-line.png'" alt="phone call" style="height: 20px;width: 20px;">
+        <img [src]="'dots.png'" alt="select option" style="height: 20px;width: 18px;" (click)="openChatDropdown()">
+        <div *ngIf="chatdropdown" class="chatdropdown">
+          <button>View Contact</button>
+          <button>Search</button>
+          <button>Clear Chat</button>
+          <button>Wallpaper</button>
+        </div>
+      </div>
     </header>
-
 
     <!-- code for display group header -->
     <header class="chat-header" *ngIf="selectedGroup && showGroupHeader">
@@ -107,7 +124,7 @@
 
 
 
-    <section class="messages" *ngIf="!showGroupHeader" #messagesContainer>
+    <section class="messages" *ngIf="!showGroupHeader" #messagesContainer (click)="closeChatDropdown()">
       <div class="message-list">
         <div *ngFor="let date of getDates()">
           <div class="date-header">
@@ -119,43 +136,55 @@
 
             <div
               [ngClass]="{'message-right': message.sender.username === user.username, 'message-left': message.sender.username !== user.username}">
-              <div id="parent-msg-right" *ngIf="message.sender.username === user.username">
-                <img *ngIf="user.profileImage" [src]="'data:image/jpeg;base64,' + user.profileImage" id="msg-right"
+              <div id="parent-msg-right"
+                *ngIf="message.sender.username === user.username &&  userId!=message.deletedUser">
+                <img *ngIf="user.profileImage && userId!=message.deleteUserForEveryone"
+                  [src]="'data:image/jpeg;base64,' + user.profileImage" id="msg-right"
                   (click)="openFullScreenImage('data:image/jpeg;base64,' + user.profileImage, $event)" />
-                <img *ngIf="!user.profileImage" [src]="avatarUrl" alt="{{ user.username }}" class="user-avatar"
-                  (click)="openFullScreenImage(avatarUrl, $event)">
+                <img *ngIf="!user.profileImage && userId!=message.deleteUserForEveryone" [src]="avatarUrl"
+                  alt="{{ user.username }}" class="user-avatar" (click)="openFullScreenImage(avatarUrl, $event)">
               </div>
               <div id="parent-msg-left" *ngIf="message.sender.username !== user.username">
-                <img *ngIf="receiverImage" [src]="'data:image/jpeg;base64,' + receiverImage" id="msg-left"
+                <img *ngIf="receiverImage && receiverId!=message.deleteUserForEveryone"
+                  [src]="'data:image/jpeg;base64,' + receiverImage" id="msg-left"
                   (click)="openFullScreenImage('data:image/jpeg;base64,' + receiverImage, $event)" />
-                <img *ngIf="!receiverImage" [src]="avatarUrl" alt="{{ message.sender.username }}" class="user-avatar"
+                <img *ngIf="!receiverImage && receiverId!=message.deleteUserForEveryone" [src]="avatarUrl"
+                  alt="{{ message.sender.username }}" class="user-avatar"
                   (click)="openFullScreenImage(avatarUrl, $event)">
               </div>
-              <div class="message-content">
+              <div class="message-content" *ngIf="userId!=message.deletedUser">
                 <div class="dots-parent">
-                  <span *ngIf="message.sender.username === user.username"><strong>You:</strong> {{
-                    message.content}}</span>
-                  <img *ngIf="message.sender.username === user.username" [src]="'dots.png'" class="message-dots"
-                    alt="error" (click)="toggleDropdown(message.id, message.content)">
+                  <span *ngIf="message.sender.username === user.username"><strong
+                      *ngIf="userId!=message.deleteUserForEveryone">You:</strong><img
+                      *ngIf="userId==message.deleteUserForEveryone" [src]="'block.png'"
+                      style="width: 15px;height: 15px; margin-right: 5px;" />{{message.content}} </span>
+                  <img *ngIf="message.sender.username === user.username &&  userId!=message.deleteUserForEveryone"
+                    [src]="'dots.png'" class="message-dots" alt="error"
+                    (click)="toggleDropdown(message.id, message.content)">
                   <div *ngIf="editedId === message.id && dropdownVisible" class="dropdown-menu">
                     <button (click)="editMessage()">Edit</button>
-                    <button (click)="deleteMessage()">Delete</button>
+                    <button (click)="deleteMessage()">Delete for everyone</button>
+                    <button (click)="deleteForMe()">Delete for me</button>
                     <button (click)="removeDropDown()">Cancel</button>
                   </div>
                 </div>
 
-                <span *ngIf="message.sender.username !== user.username"><strong>{{ message.sender.username }}:</strong>
+                <span *ngIf="message.sender.username !== user.username"><strong
+                    *ngIf="receiverId!=message.deleteUserForEveryone">{{ message.sender.username }}:</strong><img
+                    *ngIf="receiverId==message.deleteUserForEveryone" [src]="'block.png'"
+                    style="width: 15px;height: 15px; margin-right: 5px;" />
                   {{ message.content }}</span>
 
                 <!-- Display image if it exists -->
-                <img *ngIf="message.imageData" [src]="'data:image/jpeg;base64,' + message.imageData"
+                <img *ngIf="message.imageData " [src]="'data:image/jpeg;base64,' + message.imageData"
                   alt="Can't load image" class="menu-image"
                   (click)="openFullScreenImage('data:image/jpeg;base64,' + message.imageData, $event)"
                   [ngClass]="{'image-right': message.sender.username === user.username, 'image-left': message.sender.username !== user.username}" />
                 <div class="message-status">
                   <small>{{ message.createdAt | date:'shortTime' }}</small>
                   <!-- tick the messages if unread one tick not unread two tick -->
-                  <ng-container *ngIf="message.sender.username === user.username">
+                  <ng-container
+                    *ngIf="message.sender.username === user.username &&  userId!=message.deleteUserForEveryone">
                     <span class="tick-indicator">
                       <ng-container *ngIf="message.read">
                         <span class="tick tick-double">&#x2714;</span>
@@ -171,12 +200,11 @@
           </div>
         </div>
       </div>
-
     </section>
 
 
 
-    <!-- display for the group chat -->
+    <!-- display for the group chat  -->
     <section class="messages" *ngIf="showGroupHeader" #messagesContainer>
       <div class="message-list">
         <div *ngFor="let date of getDates()">
@@ -189,7 +217,8 @@
 
             <div
               [ngClass]="{'message-right': message.sender.username === user.username, 'message-left': message.sender.username !== user.username}">
-              <div id="parent-msg-right" *ngIf="message.sender.username === user.username">
+              <div id="parent-msg-right"
+                *ngIf="message.sender.username === user.username &&  userId!=message.deletedUser">
                 <img [src]="'data:image/jpeg;base64,' + user.profileImage" id="msg-right"
                   (click)="openFullScreenImage('data:image/jpeg;base64,' + user.profileImage, $event)" />
                 <img *ngIf="!user.profileImage" [src]="avatarUrl" alt="{{ user.username }}" class="user-avatar"
@@ -201,15 +230,20 @@
                 <img [src]="avatarUrl" alt="{{ message.sender.username }}" class="user-avatar"
                   (click)="openFullScreenImage(avatarUrl, $event)">
               </div>
-              <div class="message-content">
+              <div class="message-content" *ngIf="userId!=message.deletedUser">
                 <div class="dots-parent">
-                  <span *ngIf="message.sender.username === user.username"><strong>You:</strong> {{
+                  <span *ngIf="message.sender.username === user.username"><strong
+                      *ngIf="userId!=message.deleteUserForEveryone">You:</strong><img
+                      *ngIf="userId==message.deleteUserForEveryone" [src]="'block.png'"
+                      style="width: 15px;height: 15px; margin-right: 5px;" /> {{
                     message.content}}</span>
-                  <img *ngIf="message.sender.username === user.username" [src]="'dots.png'" class="message-dots"
-                    alt="error" (click)="toggleDropdown(message.id, message.content)">
+                  <img *ngIf="message.sender.username === user.username &&  userId!=message.deleteUserForEveryone"
+                    [src]="'dots.png'" class="message-dots" alt="error"
+                    (click)="toggleDropdown(message.id, message.content)">
                   <div *ngIf="editedId === message.id && dropdownVisible" class="dropdown-menu">
                     <button (click)="editMessage()">Edit</button>
-                    <button (click)="deleteGroupMessage()">Delete</button>
+                    <button (click)="deleteGroupMessageForMe()">Delete for me</button>
+                    <button (click)="deleteGroupMessage()">Delete for everyone</button>
                     <button (click)="removeDropDown()">Cancel</button>
                   </div>
                 </div>
@@ -225,7 +259,8 @@
                 <div class="message-status">
                   <small>{{ message.createdAt | date:'shortTime' }}</small>
                   <!-- tick the messages if unread one tick not unread two tick -->
-                  <ng-container *ngIf="message.sender.username === user.username">
+                  <ng-container
+                    *ngIf="message.sender.username === user.username  &&  userId!=message.deleteUserForEveryone">
                     <span class="tick-indicator">
                       <ng-container *ngIf="message.read">
                         <span class="tick tick-double">&#x2714;</span>
@@ -254,7 +289,8 @@
     <footer class="message-input" *ngIf="selectedUser && showUserHeader">
       <!-- <textarea [(ngModel)]="messageContent" placeholder="Type your message..." (keydown)="onKeyDown($event)">
       </textarea> -->
-      <input [(ngModel)]="messageContent" placeholder="Type your message..." (keydown)="onKeyDown($event)">
+      <input [(ngModel)]="messageContent" placeholder="Type your message..." (keydown)="onKeyDown($event)"
+        (focus)="onInputFocus()" (blur)="onInputBlur()">
 
       <div class="icon-wrapper">
         <input type="file" id="image-upload" accept="image/*" (change)="onFileChange($event)" />
@@ -275,7 +311,8 @@
 
     <!-- Input button display code for Group -->
     <footer class="message-input" *ngIf="selectedGroup && showGroupHeader">
-      <input [(ngModel)]="messageContent" placeholder="Type your message..." (keydown)="onKeyDown($event)">
+      <input [(ngModel)]="messageContent" placeholder="Type your message..." (keydown)="onKeydownGroup($event)"
+        (focus)="onInputFocus()" (blur)="onInputBlur()">
       <div class="icon-wrapper">
         <input type="file" id="image-upload" accept="image/*" (change)="onFileChange($event)" />
         <label for="image-upload" class="upload-icon" *ngIf="!fileSelected">
@@ -306,18 +343,18 @@
 <div class="modal" *ngIf="showGroupUser">
   <div class="modal-content">
     <div class="group-participants">
-      <h2>Group Participants</h2>
+      <h5>Group Participants</h5>
       <img [src]="'cancel.png'" alt="cancel image" id="cancelbtn" (click)="closeGroupUserList()">
     </div>
     <div class="add-memberbtn">
       <button class="add-member" (click)="addMember()">Add Member</button>
       <button class="add-member" (click)="removeMember()">Remove Member</button>
-     </div>
+    </div>
     <div class="user-list">
       <label *ngFor="let user of members">
         <input type="checkbox" [value]="user.user.id" (change)="onUserSelectionChange($event)" />
-        <img *ngIf="user.user.profileImage" [src]="'data:image/jpeg;base64,' + user.user.profileImage" alt="{{ user.username }}"
-          class="user-avatar">
+        <img *ngIf="user.user.profileImage" [src]="'data:image/jpeg;base64,' + user.user.profileImage"
+          alt="{{ user.username }}" class="user-avatar">
         <img *ngIf="!user.user.profileImage" [src]="avatarUrl" alt="{{ user.username }}" class="user-avatar">
         <div *ngIf="!user.admin">
           {{ user.user.username }}
@@ -333,3 +370,96 @@
 
 
 
+
+     <!-- popup for who block the user  -->
+     <div class="unblock-user" *ngIf="showSendMessagePop">
+      <div class="popup-unblock">
+        <p>Unblock {{selectedUser.username}} to send message</p>
+        <div class="unblock-button">
+          <button (click)="cancelMessagepop()">Cancel</button>
+          <button (click)="unBlockUser()">Unblock</button>
+        </div>
+      </div>
+    </div>
+
+
+
+
+<!-- code for show the profile of user when click on the user name -->
+<div class="parent-profile">
+  <div class="profile-modal" *ngIf="profilePopup">
+    <div class="modal-content">
+      <img [src]="'cancel.png'" alt="cancel image" class="close" (click)="closeProfilePopup()">
+      <div class="profile-image">
+        <img *ngIf="selectedUser.profileImage" [src]="'data:image/jpeg;base64,' + selectedUser.profileImage"
+          alt="{{ selectedUser.username }}">
+        <img *ngIf="!selectedUser.profileImage" [src]="'profile.png'" alt="{{ selectedUser.username }}">
+      </div>
+      <div class="profile-info">
+        <h6 style="margin-bottom: 3px;">{{ capitalizeFirstLetter(selectedUser.username) }}</h6>
+        <p style="margin-bottom: 3px;">+91 {{selectedUser.phoneNumber}}</p>
+        <small *ngIf="!selectedUser.isLogin">
+          {{ selectedUser.logOutTimer | customDate }}
+        </small>
+        <small *ngIf="selectedUser.isLogin">online</small>
+      </div>
+      <div class="popup-icons">
+        <div class="img">
+          <img [src]="'phone-line.png'" alt="phone" />
+          <small>Audio</small>
+        </div>
+        <div class="img">
+          <img [src]="'video-chat-line.png'" alt="video" />
+          <small>Video</small>
+        </div>
+        <div class="img">
+          <img [src]="'pay.png'" alt="for pay" />
+          <small>Pay</small>
+        </div>
+        <div class="img">
+          <img [src]="'search1.png'" alt="search" style="height: 24px; width: 24px;" />
+          <small>Search</small>
+        </div>
+      </div>
+      <div class="description">
+        <p>Hey there! I am using ChatApp</p>
+      </div>
+      <div class="notification">
+        <img [src]="'notification.png'" alt="notification" style="height: 24px; width: 24px;" />
+        <p>Notification</p>
+      </div>
+      <div class="notification">
+        <img [src]="'media.png'" alt="media" style="height: 24px; width: 24px;" />
+        <p>Media Visibility</p>
+      </div>
+      <div class="notification" *ngIf="!isBlocked">
+        <img [src]="'block.png'" alt="block" style="height: 22px; width: 22px;" />
+        <p style="color: red;" (click)="blockUser()">Block</p>
+      </div>
+      <div class="notification" *ngIf="isBlocked">
+        <img [src]="'block.png'" alt="block" style="height: 22px; width: 22px;" />
+        <p style="color: red;" (click)="unBlockUser()">Unblock</p>
+      </div>
+      <div class="notification">
+        <img [src]="'report.png'" alt="report" style="height: 24px; width: 24px;" />
+        <p style="color: red;">Report</p>
+      </div>
+
+    </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
